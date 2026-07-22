@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gurukuhebat.github.io/sitemap.xml

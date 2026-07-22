@@ -1,0 +1,45 @@
+/* =====================================================================
+   print.css — aturan cetak/PDF khusus dokumen
+   Dipakai saat mode print browser, dan sebagai referensi page-break
+   untuk pratinjau. PDF utama dihasilkan pdfmake (terkontrol penuh).
+   ===================================================================== */
+
+@page {
+  size: A4;
+  margin: 18mm 16mm;
+}
+
+body { background: #fff !important; color: #000 !important; font-size: 12pt; }
+
+.app-header, .app-footer, .nav-toggle, .nav, .toast-area,
+.btn, .no-print, .page-head, .breadcrumb, .card__header,
+.upload-zone, .signature-box, .tabs, .tab {
+  display: none !important;
+}
+
+.container { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+main.container { padding: 0 !important; }
+
+.card {
+  border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important;
+}
+
+/* Hanya area dokumen yang dicetak */
+.doc-preview {
+  box-shadow: none !important; border: 0 !important;
+  padding: 0 !important; margin: 0 !important;
+  max-width: none !important; width: 100% !important;
+  font-family: "Times New Roman", Georgia, serif !important;
+}
+
+/* Hindari pemotongan janggal pada baris tabel & blok penting */
+table.data, table.grade-sheet { page-break-inside: auto; }
+table.data tr, table.grade-sheet tr { page-break-inside: avoid; page-break-after: auto; }
+table.data thead, table.grade-sheet thead { display: table-header-group; }
+table.data tfoot, table.grade-sheet tfoot { display: table-footer-group; }
+
+.doc-pengesahan, .doc-kop { page-break-inside: avoid; }
+h1, h2, h3 { page-break-after: avoid; }
+
+/* Warna tetap utuh saat cetak */
+* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }

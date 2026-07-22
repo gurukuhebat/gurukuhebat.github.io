@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Guruku Hebat — memudahkan guru mengelola jurnal pembelajaran dan rekap nilai siswa, lengkap dengan cetak PDF presisi dan tanda tangan digital." />
+  <meta name="theme-color" content="#1d4ed8" />
+  <title>Guruku Hebat — Jurnal & Nilai Siswa</title>
+
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Guruku Hebat" />
+  <meta property="og:description" content="Memudahkan guru mengelola jurnal pembelajaran dan rekap nilai siswa." />
+  <meta property="og:url" content="https://gurukuhebat.github.io" />
+  <meta property="og:image" content="favicon.svg" />
+
+  <!-- Gaya -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/print.css" media="print" />
+</head>
+<body>
+  <a class="skip-link" href="#konten-utama">Lewati ke konten</a>
+
+  <!-- ============ HEADER / NAVIGASI ============ -->
+  <header class="app-header" role="banner">
+    <div class="app-header__inner">
+      <a href="#/" class="brand" aria-label="Beranda Guruku Hebat">
+        <img src="favicon.svg" alt="" class="brand__logo" width="36" height="36" aria-hidden="true" />
+        <span class="brand__text">
+          <span class="brand__name">Guruku Hebat</span>
+          <span class="brand__tag">Jurnal &amp; Nilai Siswa</span>
+        </span>
+      </a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navUtama">
+        <span class="nav-toggle__bar"></span>
+        <span class="nav-toggle__bar"></span>
+        <span class="nav-toggle__bar"></span>
+      </button>
+
+      <nav class="nav" id="navUtama" aria-label="Navigasi utama">
+        <a href="#/" class="nav__link" data-route="/">Beranda</a>
+        <a href="#/jurnal" class="nav__link" data-route="/jurnal">Jurnal Harian</a>
+        <a href="#/nilai" class="nav__link" data-route="/nilai">Nilai Siswa</a>
+        <a href="#/pengaturan" class="nav__link" data-route="/pengaturan">Pengaturan</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============ KONTEN UTAMA (diisi router) ============ -->
+  <main id="konten-utama" class="container" role="main" tabindex="-1"></main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="container">
+      <p>
+        <strong>Guruku Hebat</strong> — berjalan sepenuhnya di peramban Anda. Data tersimpan di perangkat ini.
+      </p>
+      <p class="app-footer__hint">
+        Tip: gunakan <a href="#/pengaturan">Pengaturan</a> untuk mengunggah logo sekolah &amp; tanda tangan, lalu cetak/PDF.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ============ MODAL UMUM (konfirmasi, tanda tangan, dll) ============ -->
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalTitle">Judul</h2>
+        <button class="modal__close" id="modalClose" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal__body" id="modalBody"></div>
+      <div class="modal__footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST (notifikasi) ============ -->
+  <div class="toast-area" id="toastArea" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ============ LIBRARY VENDOR LOKAL ============ -->
+  <script src="assets/lib/pdfmake.min.js"></script>
+  <script src="assets/lib/vfs_fonts.js"></script>
+  <script src="assets/lib/signature_pad.umd.min.js"></script>
+  <script src="assets/lib/jspdf.umd.min.js"></script>
+  <script src="assets/lib/html2canvas.min.js"></script>
+
+  <!-- ============ SKRIP APLIKASI ============ -->
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/signature.js"></script>
+  <script src="assets/js/pdf.js"></script>
+  <script src="assets/js/identitas.js"></script>
+  <script src="assets/js/bobot.js"></script>
+  <script src="assets/js/jurnal.js"></script>
+  <script src="assets/js/nilai.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Guruku Hebat",
+  "short_name": "Guruku Hebat",
+  "description": "Memudahkan guru mengelola jurnal pembelajaran dan rekap nilai siswa.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#1d4ed8",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
