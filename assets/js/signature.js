@@ -105,7 +105,7 @@
         "</div>" +
         '<div class="tab-panel" id="panelTtd">' +
           '<p class="field-note">Tanda tangan langsung di layar dengan jari/mouse, lalu simpan sebagai PNG transparan.</p>' +
-          '<button class="btn btn--secondary" id="bukaTtd">✍️ Buka Kanvas Tanda Tangan</button>' +
+          '<button class="btn btn--secondary" id="bukaTtd">Buka Kanvas Tanda Tangan</button>' +
         "</div>",
       footerHTML:
         '<button class="btn btn--ghost" id="ungBatal">Batal</button>' +

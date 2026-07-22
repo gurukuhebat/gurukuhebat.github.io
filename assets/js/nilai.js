@@ -16,7 +16,7 @@
   app.renderNilai = function (el) {
     el.innerHTML =
       '<div class="page-head"><div class="breadcrumb">Nilai Siswa</div>' +
-      "<h1>📊 Input &amp; Rekap Nilai</h1>" +
+      "<h1>Input &amp; Rekap Nilai</h1>" +
       '<p class="text-muted">Masukkan nilai tanpa rumus — perhitungan otomatis. Atur komponen & bobot sesuai kebutuhan.</p></div>' +
 
       '<div class="tabs" role="tablist">' +
@@ -156,7 +156,7 @@
       '<div id="kp-wrap"></div>' +
       '<div id="kp-status"></div>' +
       '<div class="btn-row mt-1"><button class="btn btn--primary" id="kpSimpan">Simpan Komponen &amp; Bobot</button></div>' +
-      '<details class="mt-2"><summary class="text-muted">ℹ️ Cara pembobotan</summary>' +
+      '<details class="mt-2"><summary class="text-muted">Cara pembobotan</summary>' +
       '<p class="text-muted mb-0">Nilai Akhir = Σ (rata-rata komponen × bobot%). Setiap komponen boleh punya banyak entri (mis. Ulangan Harian 1, 2, 3) yang otomatis dirata-rata. Total bobot <strong>wajib 100%</strong>.</p></details>' +
       "</div>";
 
@@ -256,7 +256,7 @@
     const v = app.validasiBobot(komponen);
     const alertBobot = v.valid
       ? '<div class="alert alert--success">Total bobot 100% ✓. Nilai Akhir dihitung sebagai rata-rata tertimbang.</div>'
-      : '<div class="alert alert--warning">⚠️ Total bobot ' + v.total + "% (harus 100%). Nilai Akhir sementara dihitung dari bobot saat ini. Perbaiki di tab Komponen &amp; Bobot.</div>";
+      : '<div class="alert alert--warning">Total bobot ' + v.total + "% (harus 100%). Nilai Akhir sementara dihitung dari bobot saat ini. Perbaiki di tab Komponen &amp; Bobot.</div>";
 
     // Bangun header kolom: tiap komponen punya sub-baris entri (mis. UH1, UH2...)
     // Untuk kesederhanaan, tiap komponen punya 1 sel input teks yang menerima banyak nilai dipisah koma/spasi.
@@ -303,9 +303,9 @@
       '<div class="card">' +
         '<div class="card__header"><h3>Tabel Nilai</h3>' +
         '<div class="btn-row">' +
-          '<button class="btn btn--ghost btn--sm" id="nsExportCSV">⬇️ CSV</button>' +
-          '<button class="btn btn--ghost btn--sm" id="nsExportJSON">⬇️ JSON</button>' +
-          '<button class="btn btn--primary btn--sm" id="nsCetak">🖨️ Cetak / PDF</button>' +
+          '<button class="btn btn--ghost btn--sm" id="nsExportCSV">CSV</button>' +
+          '<button class="btn btn--ghost btn--sm" id="nsExportJSON">JSON</button>' +
+          '<button class="btn btn--primary btn--sm" id="nsCetak">Cetak / PDF</button>' +
         "</div></div>" +
         '<p class="text-muted">Masukkan nilai 0–100. Banyak nilai dalam satu komponen dipisah koma (mis. <code>80, 75, 90</code>) → otomatis dirata-rata. Klik di luar sel untuk menyimpan.</p>' +
         '<div class="table-wrap"><table class="data grade-sheet" id="tabelNilai">' +

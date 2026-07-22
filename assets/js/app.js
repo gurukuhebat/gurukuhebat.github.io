@@ -204,7 +204,7 @@
   app.renderPengaturan = function (el) {
     el.innerHTML =
       '<div class="page-head"><div class="breadcrumb">Pengaturan</div>' +
-      "<h1>⚙️ Pengaturan</h1>" +
+      "<h1>Pengaturan</h1>" +
       '<p class="text-muted">Atur identitas sekolah, logo & tanda tangan, pengesahan, bobot nilai, dan cadangan data.</p></div>' +
 
       '<div class="tabs" role="tablist">' +
@@ -428,8 +428,8 @@
     target.innerHTML = '<div class="card"><h3>Backup &amp; Pemulihan</h3>' +
       '<p class="text-muted">Ekspor seluruh data (identitas, jurnal, siswa, nilai, aset, pengaturan) sebagai satu berkas JSON untuk cadangan atau pindah perangkat.</p>' +
       '<div class="btn-row">' +
-        '<button class="btn btn--primary" id="bkExport">⬇️ Export Semua Data (JSON)</button>' +
-        '<label class="btn btn--secondary" for="bkImport">⬆️ Import Data (JSON)</label>' +
+        '<button class="btn btn--primary" id="bkExport">Export Semua Data (JSON)</button>' +
+        '<label class="btn btn--secondary" for="bkImport">Import Data (JSON)</label>' +
         '<input type="file" id="bkImport" accept="application/json,.json" hidden />' +
       "</div>" +
       '<hr class="divider" />' +

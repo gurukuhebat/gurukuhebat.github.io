@@ -17,7 +17,7 @@
   app.renderJurnal = function (el) {
     el.innerHTML =
       '<div class="page-head no-print"><div class="breadcrumb">Jurnal</div>' +
-      "<h1>📓 Jurnal Harian Pembelajaran</h1>" +
+      "<h1>Jurnal Harian Pembelajaran</h1>" +
       '<p class="text-muted">Isi data sekolah, tambah pertemuan tiap minggu, lalu cetak/PDF menjadi dokumen resmi.</p></div>' +
 
       // Tombol aksi
@@ -25,8 +25,8 @@
         '<div class="flex-between">' +
           "<div><strong>Entri tersimpan:</strong> <span id='jumlahEntri'>0</span> pertemuan</div>" +
           '<div class="btn-row">' +
-            '<button class="btn btn--secondary" id="jrPratinjau">👁️ Pratinjau Dokumen</button>' +
-            '<button class="btn btn--primary" id="jrCetak">🖨️ Cetak / PDF (Tajam)</button>' +
+            '<button class="btn btn--secondary" id="jrPratinjau">Pratinjau Dokumen</button>' +
+            '<button class="btn btn--primary" id="jrCetak">Cetak / PDF (Tajam)</button>' +
             '<button class="btn btn--ghost" id="jrCetakPrev">PDF Sesuai Pratinjau</button>' +
           "</div>" +
         "</div>" +
@@ -224,7 +224,7 @@
       bodyHTML: app.bangunDokumenJurnalHTML(),
       footerHTML:
         '<button class="btn btn--ghost" id="pvTutup">Tutup</button>' +
-        '<button class="btn btn--primary" id="pvCetak">🖨️ Cetak / PDF (Tajam)</button>' +
+        '<button class="btn btn--primary" id="pvCetak">Cetak / PDF (Tajam)</button>' +
         '<button class="btn btn--secondary" id="pvCetakPrev">PDF Sesuai Pratinjau</button>'
     });
     document.getElementById("pvTutup").onclick = function () { app.modal.tutup(); };
