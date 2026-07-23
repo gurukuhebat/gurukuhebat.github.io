@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Logo Guruku Hebat">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Atap/guru -->
+  <path d="M32 12 L52 26 L48 26 L48 44 L16 44 L16 26 L12 26 Z" fill="#ffffff"/>
+  <!-- Papan buku -->
+  <rect x="22" y="30" width="20" height="14" fill="#1d4ed8"/>
+  <!-- Garis teks -->
+  <rect x="25" y="34" width="14" height="2" fill="#ffffff"/>
+  <rect x="25" y="38" width="9" height="2" fill="#ffffff"/>
+  <!-- Bintang prestasi -->
+  <path d="M44 16 l1.8 3.6 4 .6 -2.9 2.8 .7 4 -3.6 -1.9 -3.6 1.9 .7 -4 -2.9 -2.8 4 -.6 Z" fill="#fde047"/>
+</svg>
