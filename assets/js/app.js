@@ -33,6 +33,33 @@
   }
   app.tglPendek = tglPendek;
 
+  /* ---------- PARSE NILAI ----------
+     Mengubah input teks guru menjadi array angka 0–100.
+     Mendukung desimal Indonesia ("75,5") & internasional ("75.5"),
+     serta banyak nilai dalam satu sel.
+
+     Aturan pemisahan (ramah guru Indonesia):
+     - SPASI / titik-koma = pemisah antar nilai  → "80 90" = [80, 90]
+     - KOMA = desimal Indonesia bila diapit digit  → "75,5" = [75.5]
+       namun pemisah antar nilai bila ada spasi    → "80, 75" = [80, 75]
+     Strategi: pecah dulu dengan "spasi + koma(spasi)", tiap token coba
+     di-parse; bila masih mengandung koma antar-digit, anggap desimal. */
+  app.parseNilai = function (teks) {
+    if (!teks) return [];
+    // Normalisasi titik-koma & tab → spasi
+    let s = String(teks).trim().replace(/[;\t]+/g, " ");
+    // Pisah token: gunakan spasi ATAU ", " (koma + spasi) sebagai batas.
+    // Token tanpa spasi setelah koma tetap utuh, mis. "75,5" → token "75,5".
+    const tokens = s.split(/\s+|,\s+/).filter(Boolean);
+    return tokens.map(function (tok) {
+      // Koma diapit digit → desimal Indonesia
+      const norm = tok.replace(",", ".");
+      const n = parseFloat(norm);
+      if (isNaN(n)) return null;
+      return Math.max(0, Math.min(100, n)); // validasi 0–100
+    }).filter(function (x) { return x !== null; });
+  };
+
   /* ---------- TOAST ---------- */
   function toast(pesan, tipe) {
     const area = document.getElementById("toastArea");

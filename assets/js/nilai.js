@@ -326,14 +326,11 @@
         const kid = inp.getAttribute("data-k");
         const nilaiAll = Store.get("nilai");
         if (!nilaiAll[sid]) nilaiAll[sid] = {};
-        // parse: pisah koma/spasi, ambil angka 0–100
-        const parts = inp.value.split(/[,;\s]+/).map(function (x) { return x.trim(); }).filter(Boolean);
-        const angka = parts.map(function (x) {
-          let n = parseFloat(x.replace(",", "."));
-          if (isNaN(n)) return null;
-          n = Math.max(0, Math.min(100, n)); // validasi 0–100
-          return n;
-        }).filter(function (x) { return x !== null; });
+        // parse angka 0–100, mendukung desimal Indonesia ("75,5") maupun "75.5".
+        // Strategi: deteksi koma yang diapit digit (desimal) → ganti jadi titik,
+        // lalu pisah berdasarkan separator item (spasi, koma antar-item, titik-koma).
+        // "80, 75,5 90" → "80, 75.5 90" → [80, 75.5, 90]
+        const angka = app.parseNilai(inp.value);
         nilaiAll[sid][kid] = angka;
         Store.set("nilai", nilaiAll);
         inp.value = angka.join(", "); // rapikan tampilan

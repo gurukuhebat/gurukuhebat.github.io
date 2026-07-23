@@ -67,8 +67,82 @@ Semua library di-*host* secara lokal di dalam folder `assets/lib/` untuk memasti
 
 ## 🔮 Catatan Peningkatan Opsional
 
-Aplikasi saat ini hanya menyimpan data di perangkat spesifik (*LocalStorage* peramban). Jika *cache* peramban dibersihkan, data berpotensi hilang jika tidak di-*backup* (Ekspor JSON). 
+Aplikasi saat ini hanya menyimpan data di perangkat spesifik (*LocalStorage* peramban). Jika *cache* peramban dibersihkan, data berpotensi hilang jika tidak di-*backup* (Ekspor JSON).
 
 Untuk pengembangan selanjutnya, direkomendasikan:
 - **Sinkronisasi Multi-perangkat**: Menambahkan integrasi dengan **Supabase**, **Firebase**, atau solusi BaaS (*Backend as a Service*) lainnya agar data dapat disinkronkan lintas perangkat menggunakan akun pengguna.
 - **PWA Lanjutan**: Menambahkan *Service Worker* murni agar aplikasi dapat berjalan sebagai PWA (*Progressive Web App*) sepenuhnya secara *offline* di perangkat seluler.
+
+---
+
+## 🧭 Cara Pakai Singkat
+
+1. **Pengaturan** → isi identitas sekolah, unggah logo & tanda tangan (atau buat langsung di layar), isi data pengesahan (nama & NIP kepala sekolah/guru), pilih preset bobot & kategori capaian.
+2. **Jurnal Harian** → klik **+ Tambah Pertemuan**, isi tiap minggu. Klik **Pratinjau** atau **Cetak / PDF**.
+3. **Nilai Siswa** → tambah siswa (tab *Daftar Siswa*), atur komponen & bobot (tab *Komponen & Bobot*), input nilai di tabel (tab *Input Nilai*). Nilai akhir & kategori otomatis. Ekspor CSV/JSON atau cetak PDF.
+4. **Pengaturan → Backup Data** untuk ekspor/impor seluruh data.
+
+### Format input nilai
+- Satu nilai: `80`
+- Banyak nilai (dirata-rata otomatis): `80, 75, 90` — pisahkan dengan **koma + spasi**.
+- Desimal: `75,5` atau `75.5`.
+- Nilai di luar 0–100 otomatis dipotong ke rentang tersebut.
+
+---
+
+## 🏗️ Struktur Folder & Model Data
+
+```
+gurukuhebat.github.io/
+├─ index.html              # Shell SPA + navigasi + container view
+├─ 404.html, .nojekyll, manifest.webmanifest, favicon.svg
+├─ robots.txt, sitemap.xml
+└─ assets/
+   ├─ css/{styles.css, print.css}
+   ├─ lib/                 # Pustaka vendor LOKAL (versi dikunci, nol dependensi runtime)
+   │  ├─ pdfmake.min.js, vfs_fonts.js
+   │  ├─ signature_pad.umd.min.js, jspdf.umd.min.js, html2canvas.min.js
+   └─ js/
+      ├─ store.js          # Lapisan data localStorage (namespace gh_*) + export/import
+      ├─ app.js            # Bootstrap, router, util UI (toast/modal/konfirmasi), Beranda, Pengaturan
+      ├─ identitas.js      # Form identitas sekolah + render kop dokumen
+      ├─ bobot.js          # Preset bobot, validasi 100%, kategori capaian, hitung nilai akhir
+      ├─ signature.js      # Kanvas signature_pad + unggah gambar
+      ├─ jurnal.js         # Fitur 1: entri mingguan + pratinjau + cetak
+      ├─ nilai.js          # Fitur 2: siswa, komponen, tabel nilai, ekspor
+      └─ pdf.js            # Engine PDF: pdfmake (utama) + html2canvas+jsPDF (opsi)
+```
+
+**Model data** disimpan di `localStorage` dengan namespace `gh_*`:
+
+| Kunci | Isi |
+|---|---|
+| `gh_identitas` | `{ sekolah, kelas, tahun, mapel }` |
+| `gh_jurnal` | `[{ id, minggu, hari, tanggal, jamMulai, jamSelesai, tujuan, materi, penilaian }]` |
+| `gh_siswa` | `[{ id, nama, nisn }]` |
+| `gh_komponen` | `[{ id, nama, bobot }]` |
+| `gh_nilai` | `{ [siswaId]: { [komponenId]: [angka, ...] } }` |
+| `gh_aset` | `{ logo, ttdKepsek, ttdGuru, stempel }` (data URL) |
+| `gh_pengesahan` | `{ kota, tanggal, kepsek:{nama,nip}, guru:{nama,nip} }` |
+| `gh_pengaturan` | `{ presetAktif, kategori:[{min,max,label,warna}] }` |
+
+---
+
+## 📦 Versi Pustaka Vendor
+
+| Pustaka | Versi | Lisensi | Untuk |
+|---|---|---|---|
+| pdfmake + vfs_fonts (Roboto) | 0.2.10 | MIT | PDF teks tajam & terseleksi (mode utama) |
+| signature_pad | 4.1.7 | MIT | Tanda tangan digital di kanvas |
+| jsPDF | 2.5.2 | MIT | PDF mode "sesuai pratinjau" |
+| html2canvas | 1.4.1 | MIT | Render DOM ke kanvas (mode pratinjau) |
+
+---
+
+## ✅ Status Pengujian
+
+- Sintaks semua berkas JS lolos `node --check` (13/13 berkas).
+- **Uji logis** lulus pada: validasi total bobot (100%), perhitungan nilai akhir (rata-rata tertimbang), rata-rata banyak entri per komponen, kategori capaian (batas rentang), parsing nilai (desimal Indonesia & banyak nilai), clamping 0–100.
+- PDF utama memakai `dontBreakRows: true` agar baris tabel tidak terpotong saat pindah halaman.
+
+> Catatan: pengujian bersifat **logis** (analisis kode + uji unit perhitungan), **belum** diuji end-to-end di peramban nyata. Disarankan verifikasi manual di peramban sebelum penggunaan produksi resmi.
