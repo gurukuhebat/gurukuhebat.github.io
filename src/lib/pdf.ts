@@ -2,8 +2,8 @@
 // and html2canvas + jsPDF for "preview-faithful" image-based PDFs.
 // All client-side. Should only be called from client components.
 
-import type { AppData } from "./types";
-import { tglPendek } from "./format";
+import type { AppData, AbsensiStatus } from "./types";
+import { tglPendek, tglID } from "./format";
 import { hitungNilaiAkhir, kategoriNilai, rataKelas, angkaBersih } from "./bobot";
 
 let pdfMakeReady: Promise<typeof import("pdfmake/build/pdfmake")> | null = null;
@@ -369,6 +369,171 @@ export async function cetakNilai(data: AppData): Promise<void> {
   }
 
   pdfMake.createPdf(docDefinition).download("Rekap_Nilai.pdf");
+}
+
+export async function cetakAbsensi(
+  data: AppData,
+  tanggal: string
+): Promise<void> {
+  const pdfMake = await getPdfMake();
+  const { identitas: idn, siswa, absensi, pengesahan: p, aset } = data;
+
+  const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const hariNama = (() => {
+    const d = new Date(tanggal + "T00:00:00");
+    return isNaN(d.getTime()) ? "—" : HARI[d.getDay()];
+  })();
+
+  const dayMap = absensi[tanggal] || {};
+  const KET: Record<AbsensiStatus, string> = {
+    H: "Hadir",
+    S: "Sakit",
+    I: "Izin",
+    A: "Alpa",
+    B: "Bolos",
+  };
+
+  // Build table
+  const tableBody: any[] = [
+    [
+      { text: "No", style: "tableHeader", alignment: "center" },
+      { text: "Nama Siswa", style: "tableHeader", alignment: "center" },
+      { text: "NISN", style: "tableHeader", alignment: "center" },
+      { text: "Kehadiran", style: "tableHeader", alignment: "center" },
+      { text: "Keterangan", style: "tableHeader", alignment: "center" },
+    ],
+  ];
+
+  const counts: Record<AbsensiStatus, number> = { H: 0, S: 0, I: 0, A: 0, B: 0 };
+  let totalTercatat = 0;
+
+  if (siswa.length === 0) {
+    tableBody.push([
+      {
+        text: "Belum ada siswa terdaftar.",
+        colSpan: 5,
+        alignment: "center",
+        color: "#999999",
+        italics: true,
+      },
+      {},
+      {},
+      {},
+      {},
+    ]);
+  } else {
+    siswa.forEach((m, idx) => {
+      const st = dayMap[m.id] as AbsensiStatus | undefined;
+      if (st) {
+        counts[st]++;
+        totalTercatat++;
+      }
+      tableBody.push([
+        { text: String(idx + 1), alignment: "center" },
+        { text: m.nama },
+        { text: m.nisn || "—", alignment: "center" },
+        {
+          text: st || "—",
+          alignment: "center",
+          bold: true,
+        },
+        { text: st ? KET[st] : "Belum ditandai" },
+      ]);
+    });
+
+    // Footer row
+    const totalHadir = counts.H;
+    const persen =
+      siswa.length > 0 ? Math.round((totalHadir / siswa.length) * 100) : 0;
+    tableBody.push([
+      {
+        text: `Total Hadir: ${totalHadir} dari ${siswa.length} (${persen}%)`,
+        colSpan: 3,
+        alignment: "right",
+        bold: true,
+      },
+      {},
+      {},
+      { text: "H", alignment: "center", bold: true },
+      {
+        text: `S:${counts.S}  I:${counts.I}  A:${counts.A}  B:${counts.B}`,
+      },
+    ]);
+  }
+
+  const docDefinition: any = {
+    pageSize: "A4",
+    pageOrientation: "portrait",
+    pageMargins: [40, 40, 40, 40],
+    content: [
+      buildKop(idn, aset, p),
+      { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2 }] },
+      { canvas: [{ type: "line", x1: 0, y1: 2, x2: 515, y2: 2, lineWidth: 1 }] },
+      {
+        text: "REKAP ABSENSI SISWA",
+        style: "docTitle",
+        margin: [0, 15, 0, 10],
+      },
+      {
+        columns: [
+          { width: 60, text: "Hari" },
+          { width: 8, text: ":" },
+          { text: hariNama, margin: [0, 0, 16, 0] },
+          { width: 60, text: "Tanggal" },
+          { width: 8, text: ":" },
+          { text: tglID(tanggal) },
+        ],
+        margin: [0, 0, 0, 2],
+      },
+      {
+        columns: [
+          { width: 60, text: "Kelas" },
+          { width: 8, text: ":" },
+          { text: idn.kelas || "—" },
+        ],
+        margin: [0, 0, 0, 10],
+      },
+      {
+        style: "tableExample",
+        table: {
+          headerRows: 1,
+          widths: ["auto", "*", "auto", "auto", "auto"],
+          dontBreakRows: true,
+          body: tableBody,
+        },
+        layout: "lightHorizontalLines",
+      },
+      {
+        text: "Keterangan: H = Hadir, S = Sakit, I = Izin, A = Alpa, B = Bolos",
+        fontSize: 9,
+        color: "#666666",
+        margin: [0, 8, 0, 0],
+      },
+      buildPengesahan(p, aset),
+    ],
+    styles: {
+      tableHeader: { bold: true, fontSize: 10, color: "black", fillColor: "#f1f5f9" },
+      tableExample: { margin: [0, 5, 0, 15], fontSize: 10 },
+      docTitle: { fontSize: 14, bold: true, alignment: "center" },
+    },
+    defaultStyle: { fontSize: 10 },
+  };
+
+  if (aset.stempel) {
+    docDefinition.background = (currentPage: number, pageCount: number) => {
+      if (currentPage === pageCount) {
+        return {
+          image: aset.stempel,
+          width: 80,
+          absolutePosition: { x: 400, y: 700 },
+          opacity: 0.8,
+        };
+      }
+      return null;
+    };
+  }
+
+  pdfMake.createPdf(docDefinition).download(`Absensi_${tanggal}.pdf`);
 }
 
 // Preview-faithful PDF (image-based via html2canvas + jsPDF).

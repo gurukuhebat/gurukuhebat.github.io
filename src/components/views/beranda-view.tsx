@@ -14,6 +14,10 @@ import {
   CheckCircle2,
   Award,
   Layers,
+  CalendarCheck,
+  ClipboardList,
+  AlertTriangle,
+  Circle,
 } from "lucide-react";
 import {
   BarChart,
@@ -50,7 +54,9 @@ export function BerandaView() {
   const siswa = useStore((s) => s.siswa);
   const komponen = useStore((s) => s.komponen);
   const nilai = useStore((s) => s.nilai);
+  const absensi = useStore((s) => s.absensi);
   const aset = useStore((s) => s.aset);
+  const pengesahan = useStore((s) => s.pengesahan);
   const pengaturan = useStore((s) => s.pengaturan);
 
   // Statistics
@@ -95,6 +101,79 @@ export function BerandaView() {
     })
     .filter((d) => d.rata > 0);
 
+  // Absensi stats — count distinct dates with entries
+  const absensiHari = Object.keys(absensi).filter((tgl) =>
+    Object.keys(absensi[tgl] || {}).length > 0
+  ).length;
+
+  // Health check — apa saja yang belum siap untuk cetak PDF
+  const healthChecks: Array<{
+    label: string;
+    ok: boolean;
+    hint: string;
+    view?: ViewKey;
+  }> = [
+    {
+      label: "Identitas sekolah",
+      ok: Boolean(identitas.sekolah && identitas.kelas && identitas.mapel),
+      hint: identitas.sekolah ? "Sudah lengkap" : "Isi nama sekolah, kelas, mapel",
+      view: "pengaturan",
+    },
+    {
+      label: "Logo sekolah",
+      ok: Boolean(aset.logo),
+      hint: aset.logo ? "Sudah diunggah" : "Unggah logo di Pengaturan",
+      view: "pengaturan",
+    },
+    {
+      label: "Tanda tangan guru",
+      ok: Boolean(aset.ttdGuru),
+      hint: aset.ttdGuru ? "Sudah diatur" : "Buat TTD digital di Pengaturan",
+      view: "pengaturan",
+    },
+    {
+      label: "Data pengesahan",
+      ok: Boolean(
+        pengesahan.kota &&
+          pengesahan.guru.nama &&
+          pengesahan.kepsek.nama
+      ),
+      hint:
+        pengesahan.guru.nama && pengesahan.kepsek.nama
+          ? "Sudah lengkap"
+          : "Isi nama guru & kepsek",
+      view: "pengaturan",
+    },
+    {
+      label: "Daftar siswa",
+      ok: siswa.length > 0,
+      hint: siswa.length > 0 ? `${siswa.length} siswa` : "Tambahkan siswa dulu",
+      view: "nilai",
+    },
+    {
+      label: "Komponen & bobot nilai",
+      ok: Math.abs(
+        komponen.reduce((s, k) => s + (parseFloat(k.bobot as any) || 0), 0) - 100
+      ) < 0.01,
+      hint:
+        Math.abs(
+          komponen.reduce((s, k) => s + (parseFloat(k.bobot as any) || 0), 0) - 100
+        ) < 0.01
+          ? "Total 100%"
+          : "Total belum 100%",
+      view: "nilai",
+    },
+    {
+      label: "Entri jurnal",
+      ok: jurnal.length > 0,
+      hint: jurnal.length > 0 ? `${jurnal.length} entri` : "Belum ada jurnal",
+      view: "jurnal",
+    },
+  ];
+  const healthOk = healthChecks.filter((c) => c.ok).length;
+  const healthTotal = healthChecks.length;
+  const healthPct = Math.round((healthOk / healthTotal) * 100);
+
   const stats = [
     {
       label: "Sekolah",
@@ -118,6 +197,13 @@ export function BerandaView() {
       big: true,
     },
     {
+      label: "Hari Absensi",
+      value: String(absensiHari),
+      hint: absensiHari > 0 ? "tanggal tercatat" : "mulai di Absensi",
+      icon: CalendarCheck,
+      big: true,
+    },
+    {
       label: "Rata-rata Kelas",
       value: avgKelas !== null ? avgKelas.toFixed(1) : "—",
       hint: "dari nilai akhir",
@@ -126,8 +212,8 @@ export function BerandaView() {
     },
     {
       label: "Logo & TTD",
-      value: aset.logo ? "✓" : "—",
-      hint: aset.logo ? "sudah diatur" : "cek Pengaturan",
+      value: aset.logo ? "Sudah" : "Belum",
+      hint: aset.logo ? "aset siap" : "cek Pengaturan",
       icon: CheckCircle2,
       big: false,
     },
@@ -156,6 +242,13 @@ export function BerandaView() {
     },
     {
       no: 3,
+      title: "Absensi Siswa",
+      desc: "Tandai kehadiran harian & rekap bulanan",
+      icon: CalendarCheck,
+      view: "absensi",
+    },
+    {
+      no: 4,
       title: "Nilai Siswa",
       desc: "Input nilai & rekap otomatis dengan kategori",
       icon: GraduationCap,
@@ -182,7 +275,7 @@ export function BerandaView() {
             Versi 2.0 — React + Next.js
           </Badge>
           <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            Selamat datang di Guruku Hebat 👋
+            Selamat datang di Guruku Hebat
           </h1>
           <p className="mt-4 max-w-xl text-pretty text-sm leading-relaxed text-primary-foreground/90 sm:text-base">
             Platform ringan untuk membantu Bapak/Ibu guru mengelola{" "}
@@ -214,7 +307,7 @@ export function BerandaView() {
       </motion.section>
 
       {/* STATS GRID */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
@@ -343,6 +436,78 @@ export function BerandaView() {
         </section>
       )}
 
+      {/* HEALTH CHECK WIDGET */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <Card className="card-fancy">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <ClipboardList className="size-5 text-primary" />
+                Siap Cetak?
+              </span>
+              <Badge
+                variant="outline"
+                className={
+                  healthPct === 100
+                    ? "border-success/40 bg-success/10 text-success"
+                    : healthPct >= 60
+                      ? "border-warning/40 bg-warning/10 text-warning"
+                      : "border-destructive/40 bg-destructive/10 text-destructive"
+                }
+              >
+                {healthOk}/{healthTotal} siap · {healthPct}%
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {healthChecks.map((c) => (
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={() => c.view && setView(c.view)}
+                  className="group flex items-start gap-2.5 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/30"
+                >
+                  {c.ok ? (
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+                  ) : (
+                    <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/40" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">{c.label}</span>
+                      {!c.ok && c.view && (
+                        <ArrowRight className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      )}
+                    </div>
+                    <p
+                      className={`text-xs ${
+                        c.ok ? "text-muted-foreground" : "text-warning"
+                      }`}
+                    >
+                      {c.hint}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {healthPct < 100 && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-warning/5 p-3 text-xs text-warning">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>
+                  Lengkapi item yang belum tercentang agar dokumen yang dicetak
+                  tampil sempurna dengan kop, TTD, dan pengesahan.
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.section>
+
       {/* QUICK START STEPS */}
       <section>
         <motion.div
@@ -358,7 +523,7 @@ export function BerandaView() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {quickSteps.map((step, i) => (
                   <motion.button
                     key={step.no}

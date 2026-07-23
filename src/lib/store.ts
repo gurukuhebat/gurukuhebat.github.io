@@ -9,6 +9,9 @@ import type {
   Siswa,
   Komponen,
   NilaiMap,
+  AbsensiStatus,
+  AbsensiMap,
+  CatatanSiswa,
   Aset,
   Pengesahan,
   Pengaturan,
@@ -37,6 +40,17 @@ interface AppState extends AppData {
 
   setNilai: (siswaId: string, komponenId: string, angka: number[]) => void;
   setNilaiMap: (n: NilaiMap) => void;
+
+  // Absensi mutators
+  setAbsensi: (tanggal: string, siswaId: string, status: AbsensiStatus) => void;
+  setAbsensiBulk: (tanggal: string, siswaIds: string[], status: AbsensiStatus) => void;
+  clearAbsensiTanggal: (tanggal: string) => void;
+  setAbsensiMap: (a: AbsensiMap) => void;
+
+  // Catatan anekdotal mutators
+  addCatatan: (c: Omit<CatatanSiswa, "id" | "createdAt">) => void;
+  updateCatatan: (id: string, patch: Partial<CatatanSiswa>) => void;
+  deleteCatatan: (id: string) => void;
 
   setAset: (patch: Partial<Aset>) => void;
   setPengesahan: (p: Pengesahan) => void;
@@ -173,6 +187,47 @@ export const useStore = create<AppState>()(
       },
       setNilaiMap: (n) => set({ nilai: n }),
 
+      // ===== Absensi =====
+      setAbsensi: (tanggal, siswaId, status) => {
+        const absensi = { ...get().absensi };
+        if (!absensi[tanggal]) absensi[tanggal] = {};
+        absensi[tanggal] = { ...absensi[tanggal], [siswaId]: status };
+        set({ absensi });
+      },
+      setAbsensiBulk: (tanggal, siswaIds, status) => {
+        const absensi = { ...get().absensi };
+        const tanggalMap = { ...(absensi[tanggal] || {}) };
+        siswaIds.forEach((sid) => {
+          tanggalMap[sid] = status;
+        });
+        absensi[tanggal] = tanggalMap;
+        set({ absensi });
+      },
+      clearAbsensiTanggal: (tanggal) => {
+        const absensi = { ...get().absensi };
+        delete absensi[tanggal];
+        set({ absensi });
+      },
+      setAbsensiMap: (a) => set({ absensi: a }),
+
+      // ===== Catatan Anekdotal =====
+      addCatatan: (c) => {
+        const catatan: CatatanSiswa = {
+          ...c,
+          id: uid("c"),
+          createdAt: new Date().toISOString(),
+        };
+        set({ catatan: [catatan, ...get().catatan] });
+      },
+      updateCatatan: (id, patch) =>
+        set({
+          catatan: get().catatan.map((c) =>
+            c.id === id ? { ...c, ...patch } : c
+          ),
+        }),
+      deleteCatatan: (id) =>
+        set({ catatan: get().catatan.filter((c) => c.id !== id) }),
+
       setAset: (patch) => set({ aset: { ...get().aset, ...patch } }),
       setPengesahan: (p) => set({ pengesahan: p }),
       setPengaturan: (p) => set({ pengaturan: p }),
@@ -189,6 +244,8 @@ export const useStore = create<AppState>()(
           siswa: s.siswa,
           komponen: s.komponen,
           nilai: s.nilai,
+          absensi: s.absensi,
+          catatan: s.catatan,
           aset: s.aset,
           pengesahan: s.pengesahan,
           pengaturan: s.pengaturan,
@@ -209,6 +266,8 @@ export const useStore = create<AppState>()(
         if (obj.siswa) { next.siswa = obj.siswa; count++; }
         if (obj.komponen) { next.komponen = obj.komponen; count++; }
         if (obj.nilai) { next.nilai = obj.nilai; count++; }
+        if (obj.absensi) { next.absensi = obj.absensi; count++; }
+        if (obj.catatan) { next.catatan = obj.catatan; count++; }
         if (obj.aset) { next.aset = obj.aset; count++; }
         if (obj.pengesahan) { next.pengesahan = obj.pengesahan; count++; }
         if (obj.pengaturan) { next.pengaturan = obj.pengaturan; count++; }
@@ -242,6 +301,8 @@ export const useStore = create<AppState>()(
           siswa: rest.siswa,
           komponen: rest.komponen,
           nilai: rest.nilai,
+          absensi: rest.absensi,
+          catatan: rest.catatan,
           aset: rest.aset,
           pengesahan: rest.pengesahan,
           pengaturan: rest.pengaturan,

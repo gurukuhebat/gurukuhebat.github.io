@@ -16,6 +16,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
+  Upload,
+  StickyNote,
+  Download,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -45,6 +55,7 @@ import {
   TableRow,
   TableFooter,
 } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStore } from "@/lib/store";
 import { useConfirm } from "@/components/shared/confirm-dialog";
 import { DocPreviewDialog } from "@/components/shared/doc-preview-dialog";
@@ -61,7 +72,8 @@ import {
 } from "@/lib/bobot";
 import { parseNilai, formatNilai } from "@/lib/parse-nilai";
 import { cetakNilai, cetakSesuaiPratinjau } from "@/lib/pdf";
-import type { Komponen, Siswa } from "@/lib/types";
+import { tglPendek, todayISO } from "@/lib/format";
+import type { Komponen, Siswa, CatatanSiswa } from "@/lib/types";
 import { toast } from "sonner";
 
 export function NilaiView() {
@@ -256,7 +268,7 @@ function InputPanel() {
           <div className="flex-1 text-xs">
             {v.valid ? (
               <span>
-                Total bobot 100% ✓. Nilai Akhir dihitung sebagai rata-rata
+                Total bobot 100%. Nilai Akhir dihitung sebagai rata-rata
                 tertimbang.
               </span>
             ) : (
@@ -462,10 +474,13 @@ function SiswaPanel() {
   const addSiswa = useStore((s) => s.addSiswa);
   const updateSiswa = useStore((s) => s.updateSiswa);
   const deleteSiswa = useStore((s) => s.deleteSiswa);
+  const catatan = useStore((s) => s.catatan);
   const confirm = useConfirm();
 
   const [editing, setEditing] = React.useState<Siswa | null>(null);
   const [open, setOpen] = React.useState(false);
+  const [csvOpen, setCsvOpen] = React.useState(false);
+  const [catatanSiswa, setCatatanSiswa] = React.useState<Siswa | null>(null);
 
   const handleAdd = () => {
     setEditing(null);
@@ -488,17 +503,26 @@ function SiswaPanel() {
     toast.info("Siswa dihapus.");
   };
 
+  const catatanCount = (siswaId: string) =>
+    catatan.filter((c) => c.siswaId === siswaId).length;
+
   return (
     <Card className="card-fancy">
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="flex-row items-center justify-between flex-wrap gap-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Layers className="size-4 text-primary" />
           Daftar Siswa
         </CardTitle>
-        <Button size="sm" variant="secondary" onClick={handleAdd}>
-          <Plus className="mr-1 size-4" />
-          Tambah Siswa
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setCsvOpen(true)}>
+            <Upload className="mr-1 size-4" />
+            Impor CSV
+          </Button>
+          <Button size="sm" variant="secondary" onClick={handleAdd}>
+            <Plus className="mr-1 size-4" />
+            Tambah Siswa
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {siswa.length === 0 ? (
@@ -509,7 +533,8 @@ function SiswaPanel() {
             <div>
               <p className="text-sm font-medium">Belum ada siswa.</p>
               <p className="text-xs text-muted-foreground">
-                Klik <strong>+ Tambah Siswa</strong> untuk memulai.
+                Klik <strong>+ Tambah Siswa</strong> atau{" "}
+                <strong>Impor CSV</strong> untuk memulai.
               </p>
             </div>
           </div>
@@ -521,7 +546,7 @@ function SiswaPanel() {
                   <TableHead className="w-12 text-center">No</TableHead>
                   <TableHead>Nama Siswa</TableHead>
                   <TableHead>NISN</TableHead>
-                  <TableHead className="w-32 text-center">Aksi</TableHead>
+                  <TableHead className="w-44 text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -536,6 +561,23 @@ function SiswaPanel() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="relative h-8 px-2"
+                          onClick={() => setCatatanSiswa(m)}
+                          title="Catatan anekdotal siswa"
+                        >
+                          <StickyNote className="size-3.5" />
+                          {catatanCount(m.id) > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-1 h-4 min-w-4 justify-center px-1 text-[9px]"
+                            >
+                              {catatanCount(m.id)}
+                            </Badge>
+                          )}
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -580,6 +622,23 @@ function SiswaPanel() {
           setOpen(false);
         }}
       />
+
+      <ImportCsvDialog
+        open={csvOpen}
+        onOpenChange={setCsvOpen}
+        onImport={(items) => {
+          items.forEach((it) => addSiswa(it.nama, it.nisn));
+          toast.success(`${items.length} siswa berhasil diimpor.`);
+          setCsvOpen(false);
+        }}
+      />
+
+      {catatanSiswa && (
+        <CatatanSiswaDialog
+          siswa={catatanSiswa}
+          onOpenChange={(v) => !v && setCatatanSiswa(null)}
+        />
+      )}
     </Card>
   );
 }
@@ -955,6 +1014,517 @@ function downloadFile(name: string, content: string, mime: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-// Avoid unused import warnings
-void FileText;
-void Textarea;
+/* ============================ IMPORT CSV ============================ */
+
+function parseCSVLine(line: string): string[] {
+  // Simple CSV parser — supports quoted fields with commas inside
+  const result: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === "," && !inQuotes) {
+      result.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result.map((s) => s.trim());
+}
+
+function parseCSVSiswa(text: string): { nama: string; nisn: string }[] {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  if (lines.length === 0) return [];
+
+  // Detect delimiter from first line: comma, tab, or semicolon
+  const firstLine = lines[0];
+  let delimCount = { comma: 0, tab: 0, semi: 0 };
+  for (const ch of firstLine) {
+    if (ch === ",") delimCount.comma++;
+    else if (ch === "\t") delimCount.tab++;
+    else if (ch === ";") delimCount.semi++;
+  }
+  const delim = delimCount.tab >= delimCount.comma && delimCount.tab >= delimCount.semi
+    ? "tab"
+    : delimCount.semi > delimCount.comma
+      ? "semi"
+      : "comma";
+
+  const splitLine = (l: string): string[] => {
+    if (delim === "tab") return l.split("\t").map((s) => s.trim());
+    if (delim === "semi") return l.split(";").map((s) => s.trim());
+    return parseCSVLine(l);
+  };
+
+  // Detect if first line is a header
+  const firstParts = splitLine(firstLine).map((s) => s.toLowerCase());
+  const hasHeader =
+    firstParts.some((p) => p.includes("nama")) ||
+    firstParts.some((p) => p.includes("nisn")) ||
+    firstParts.some((p) => p.includes("no"));
+
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  const out: { nama: string; nisn: string }[] = [];
+
+  for (const line of dataLines) {
+    const parts = splitLine(line);
+    if (parts.length === 0) continue;
+    let nama = "";
+    let nisn = "";
+
+    if (hasHeader) {
+      // Try to match by header names
+      const headers = firstParts;
+      const namaIdx = headers.findIndex((h) => h.includes("nama"));
+      const nisnIdx = headers.findIndex(
+        (h) => h.includes("nisn") || h.includes("nis") || h.includes("induk")
+      );
+      nama = namaIdx >= 0 ? parts[namaIdx] || "" : parts[0] || "";
+      nisn = nisnIdx >= 0 ? parts[nisnIdx] || "" : parts[1] || "";
+    } else {
+      // Assume: Nama, NISN (or just Nama)
+      nama = parts[0] || "";
+      nisn = parts[1] || "";
+      // If first column looks numeric and second is text, swap
+      if (nama && /^\d+$/.test(nama) && nisn && !/^\d+$/.test(nisn)) {
+        [nama, nisn] = [nisn, nama];
+      }
+    }
+    if (nama) {
+      out.push({ nama, nisn: nisn || "" });
+    }
+  }
+  return out;
+}
+
+function ImportCsvDialog({
+  open,
+  onOpenChange,
+  onImport,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onImport: (items: { nama: string; nisn: string }[]) => void;
+}) {
+  const [text, setText] = React.useState("");
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const parsed = React.useMemo(() => (text ? parseCSVSiswa(text) : []), [text]);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => setText(String(reader.result || ""));
+    reader.readAsText(f);
+  };
+
+  const handleDownloadTemplate = () => {
+    const tmpl = "Nama,NISN\nAhmad Fauzi,1234567890\nSiti Aminah,2345678901";
+    downloadFile("template-siswa.csv", tmpl, "text/csv;charset=utf-8");
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t) setText(t);
+      else toast.info("Clipboard kosong.");
+    } catch {
+      toast.error("Tidak bisa akses clipboard. Coba paste manual.");
+    }
+  };
+
+  const handleImport = () => {
+    if (parsed.length === 0) {
+      toast.warning("Tidak ada data valid untuk diimpor.");
+      return;
+    }
+    onImport(parsed);
+    setText("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  React.useEffect(() => {
+    if (!open) {
+      setText("");
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Impor Siswa dari CSV / Teks</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Format didukung: <strong>CSV (koma)</strong>,{" "}
+            <strong>TSV (tab)</strong>, atau <strong>titik-koma</strong>. Bisa
+            dengan atau tanpa baris header (Nama, NISN).
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,.txt,.tsv,text/csv,text/plain"
+              onChange={handleFile}
+              className="hidden"
+              id="csv-file-input"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload className="mr-1 size-3.5" />
+              Pilih File
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePasteFromClipboard}
+            >
+              Tempel dari Clipboard
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleDownloadTemplate}
+            >
+              <Download className="mr-1 size-3.5" />
+              Unduh Template
+            </Button>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="csv-text">Atau tempel data di sini</Label>
+            <Textarea
+              id="csv-text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={"Nama,NISN\nAhmad Fauzi,1234567890\nSiti Aminah,2345678901"}
+              className="min-h-[140px] font-mono text-xs"
+            />
+          </div>
+
+          {parsed.length > 0 && (
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium">
+                  Pratinjau ({parsed.length} siswa akan diimpor)
+                </span>
+              </div>
+              <ScrollArea className="h-32">
+                <div className="space-y-1 pr-2">
+                  {parsed.slice(0, 50).map((p, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded bg-background px-2 py-1 text-xs"
+                    >
+                      <span>
+                        <span className="text-muted-foreground">{i + 1}.</span>{" "}
+                        {p.nama}
+                      </span>
+                      <span className="font-mono text-muted-foreground">
+                        {p.nisn || "—"}
+                      </span>
+                    </div>
+                  ))}
+                  {parsed.length > 50 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      … dan {parsed.length - 50} lainnya.
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Batal
+          </Button>
+          <Button onClick={handleImport} disabled={parsed.length === 0}>
+            Impor {parsed.length > 0 ? `(${parsed.length})` : ""}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ====================== CATATAN ANEKDOTAL SISWA ====================== */
+
+const KATEGORI_CATATAN: Array<{
+  value: CatatanSiswa["kategori"];
+  label: string;
+  color: string;
+  bg: string;
+}> = [
+  {
+    value: "positif",
+    label: "Positif",
+    color: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700",
+  },
+  {
+    value: "pencapaian",
+    label: "Pencapaian",
+    color: "text-blue-700 dark:text-blue-300",
+    bg: "bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700",
+  },
+  {
+    value: "perlu_perhatian",
+    label: "Perlu Perhatian",
+    color: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700",
+  },
+  {
+    value: "lainnya",
+    label: "Lainnya",
+    color: "text-muted-foreground",
+    bg: "bg-muted border-border",
+  },
+];
+
+function CatatanSiswaDialog({
+  siswa,
+  onOpenChange,
+}: {
+  siswa: Siswa;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const allCatatan = useStore((s) => s.catatan);
+  const addCatatan = useStore((s) => s.addCatatan);
+  const updateCatatan = useStore((s) => s.updateCatatan);
+  const deleteCatatan = useStore((s) => s.deleteCatatan);
+  const confirm = useConfirm();
+
+  const siswaCatatan = allCatatan
+    .filter((c) => c.siswaId === siswa.id)
+    .sort((a, b) => (a.tanggal < b.tanggal ? 1 : a.tanggal > b.tanggal ? -1 : 0));
+
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<CatatanSiswa | null>(null);
+  const [tanggal, setTanggal] = React.useState(todayISO());
+  const [kategori, setKategori] =
+    React.useState<CatatanSiswa["kategori"]>("positif");
+  const [judul, setJudul] = React.useState("");
+  const [isi, setIsi] = React.useState("");
+
+  const openNew = () => {
+    setEditing(null);
+    setTanggal(todayISO());
+    setKategori("positif");
+    setJudul("");
+    setIsi("");
+    setFormOpen(true);
+  };
+
+  const openEdit = (c: CatatanSiswa) => {
+    setEditing(c);
+    setTanggal(c.tanggal);
+    setKategori(c.kategori);
+    setJudul(c.judul);
+    setIsi(c.isi);
+    setFormOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!judul.trim() && !isi.trim()) {
+      toast.warning("Isi judul atau catatan terlebih dahulu.");
+      return;
+    }
+    if (editing) {
+      updateCatatan(editing.id, { tanggal, kategori, judul: judul.trim(), isi: isi.trim() });
+      toast.success("Catatan diperbarui.");
+    } else {
+      addCatatan({
+        siswaId: siswa.id,
+        tanggal,
+        kategori,
+        judul: judul.trim(),
+        isi: isi.trim(),
+      });
+      toast.success("Catatan ditambahkan.");
+    }
+    setFormOpen(false);
+  };
+
+  const handleDelete = async (c: CatatanSiswa) => {
+    const ok = await confirm({
+      message: `Hapus catatan "${c.judul || c.isi.slice(0, 30)}"?`,
+      okLabel: "Hapus",
+      danger: true,
+    });
+    if (!ok) return;
+    deleteCatatan(c.id);
+    toast.info("Catatan dihapus.");
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[640px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <StickyNote className="size-4 text-primary" />
+            Catatan: {siswa.nama}
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            NISN: {siswa.nisn || "—"} · {siswaCatatan.length} catatan
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {siswaCatatan.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/20 py-8 text-center">
+              <StickyNote className="mx-auto mb-2 size-6 text-muted-foreground" />
+              <p className="text-sm font-medium">Belum ada catatan.</p>
+              <p className="text-xs text-muted-foreground">
+                Catat prestasi, perilaku, atau hal penting tentang siswa ini.
+              </p>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[360px]">
+              <div className="space-y-2 pr-2">
+                {siswaCatatan.map((c) => {
+                  const k = KATEGORI_CATATAN.find((x) => x.value === c.kategori) || KATEGORI_CATATAN[3];
+                  return (
+                    <div key={c.id} className={`rounded-lg border p-3 ${k.bg}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`text-[10px] ${k.color}`}>
+                              {k.label}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {tglPendek(c.tanggal)}
+                            </span>
+                          </div>
+                          {c.judul && (
+                            <p className="mt-1 text-sm font-semibold">{c.judul}</p>
+                          )}
+                          {c.isi && (
+                            <p className="mt-0.5 text-xs leading-relaxed whitespace-pre-wrap">
+                              {c.isi}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 gap-0.5">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7"
+                            onClick={() => openEdit(c)}
+                          >
+                            <Pencil className="size-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(c)}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
+
+          {formOpen ? (
+            <div className="rounded-lg border bg-card p-3 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={tanggal}
+                    onChange={(e) => setTanggal(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Kategori</Label>
+                  <Select
+                    value={kategori}
+                    onValueChange={(v) =>
+                      setKategori(v as CatatanSiswa["kategori"])
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {KATEGORI_CATATAN.map((k) => (
+                        <SelectItem key={k.value} value={k.value}>
+                          {k.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Judul (opsional)</Label>
+                <Input
+                  value={judul}
+                  onChange={(e) => setJudul(e.target.value)}
+                  placeholder="Mis. Aktif bertanya di kelas"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Catatan</Label>
+                <Textarea
+                  value={isi}
+                  onChange={(e) => setIsi(e.target.value)}
+                  placeholder="Tuliskan observasi, pencapaian, atau hal yang perlu diingat..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <DialogFooter>
+          {formOpen ? (
+            <>
+              <Button variant="ghost" onClick={() => setFormOpen(false)}>
+                Batal
+              </Button>
+              <Button onClick={handleSave}>
+                {editing ? "Perbarui" : "Simpan Catatan"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                Tutup
+              </Button>
+              <Button onClick={openNew}>
+                <Plus className="mr-1 size-4" />
+                Tambah Catatan
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

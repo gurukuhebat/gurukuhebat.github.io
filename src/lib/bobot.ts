@@ -25,6 +25,8 @@ export const DEFAULT_DATA: AppData = {
   siswa: [],
   komponen: DEFAULT_KOMPONEN,
   nilai: {},
+  absensi: {},
+  catatan: [],
   aset: { logo: "", ttdKepsek: "", ttdGuru: "", stempel: "" },
   pengesahan: {
     kota: "",

@@ -34,6 +34,21 @@ export interface Komponen {
 // nilai[siswaId][komponenId] = number[]
 export type NilaiMap = Record<string, Record<string, number[]>>;
 
+// absensi[tanggalISO][siswaId] = status
+// H = Hadir, S = Sakit, I = Izin, A = Alpa, B = Bolos
+export type AbsensiStatus = "H" | "S" | "I" | "A" | "B";
+export type AbsensiMap = Record<string, Record<string, AbsensiStatus>>;
+
+export interface CatatanSiswa {
+  id: string;
+  siswaId: string;
+  tanggal: string; // YYYY-MM-DD
+  kategori: "positif" | "perlu_perhatian" | "pencapaian" | "lainnya";
+  judul: string;
+  isi: string;
+  createdAt: string; // ISO datetime
+}
+
 export interface Aset {
   logo: string;
   ttdKepsek: string;
@@ -77,10 +92,17 @@ export interface AppData {
   siswa: Siswa[];
   komponen: Komponen[];
   nilai: NilaiMap;
+  absensi: AbsensiMap;
+  catatan: CatatanSiswa[];
   aset: Aset;
   pengesahan: Pengesahan;
   pengaturan: Pengaturan;
   meta: AppMeta;
 }
 
-export type ViewKey = "beranda" | "jurnal" | "nilai" | "pengaturan";
+export type ViewKey =
+  | "beranda"
+  | "jurnal"
+  | "absensi"
+  | "nilai"
+  | "pengaturan";

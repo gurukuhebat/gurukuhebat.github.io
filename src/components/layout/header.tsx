@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Cloud,
+  CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,8 +20,9 @@ import type { ViewKey } from "@/lib/types";
 
 const NAV: Array<{ key: ViewKey; label: string; icon: React.ElementType }> = [
   { key: "beranda", label: "Beranda", icon: Home },
-  { key: "jurnal", label: "Jurnal Harian", icon: BookOpen },
-  { key: "nilai", label: "Nilai Siswa", icon: GraduationCap },
+  { key: "jurnal", label: "Jurnal", icon: BookOpen },
+  { key: "absensi", label: "Absensi", icon: CalendarCheck },
+  { key: "nilai", label: "Nilai", icon: GraduationCap },
   { key: "pengaturan", label: "Pengaturan", icon: Settings },
 ];
 
